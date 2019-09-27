@@ -1,0 +1,4 @@
+# Haskell binaries and build artifacts
+/ant
+*.hi
+*.o
