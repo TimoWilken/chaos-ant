@@ -1,9 +1,13 @@
 module Main where
 
+import Control.Concurrent (myThreadId)
+import Control.Exception (throwTo)
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.List
 import Data.Foldable
+import System.Exit
+import System.Posix.Signals
 import Text.Printf
 
 import Graphics.UI.Gtk
@@ -93,6 +97,13 @@ updateScreen grid = putStrLn $ case stepDifference grid of
 
 textMain :: IO ()
 textMain = do
+  mainThreadId <- myThreadId
+  -- Jump past all previous output on exit, so that the output up to that point
+  -- is preserved. jumping to "row 1000" seems to position the cursor just past
+  -- the end of all output, but inside the terminal window.
+  -- Inspired by: https://stackoverflow.com/a/13441917/1774233
+  installHandler keyboardSignal (Catch (do putStr "\ESC[1000;1H"
+                                           throwTo mainThreadId ExitSuccess)) Nothing
   putStr "\ESC[2J"  -- clear the screen
   traverse_ updateScreen $ iterate antStep (startGrid :: AntGrid Int)
 
